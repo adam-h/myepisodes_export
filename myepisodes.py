@@ -73,20 +73,24 @@ class MyEpisodes(object):
             return False
         soup = BeautifulSoup(data)
         out = []
-        season_ep_re = re.compile('s(?P<season>\d+)e(?P<episode>\d+)')
         mylist = soup.find("table", {"class": "mylist"})
         mylist_tr = mylist.findAll("tr", {"class": ["Episode_One", "Episode_Two"]})
         for row in mylist_tr:
             episode = row.find('td', {'class': "longnumber"})
-            episode_data = season_ep_re.match(episode.string)
+            episode_data = episode.string.split('x')
             acquired = row.find('input', attrs={'type': "checkbox", "onclick": re.compile("MarkAcquired")})
             is_acquired = True if acquired.get('checked') else False
             viewed = row.find('input', attrs={'type': "checkbox", "onclick": re.compile("MarkViewed")})
             is_viewed = True if viewed.get('checked') else False
-            out.append({'season': episode_data.group('season'), 'episode': episode_data.group('episode'), 'acquired': is_acquired, 'viewed': is_viewed})
+            out.append({'season': episode_data[0], 'episode': episode_data[1], 'acquired': is_acquired, 'viewed': is_viewed})
         return out
 
     def get_seen_episodes(self, show_id):
         data = self.get_show_data(show_id)
         out = [{'season': int(row['season']), 'episode': int(row['episode'])} for row in data if row['viewed']]
+        return out
+
+    def get_collection_episodes(self, show_id):
+        data = self.get_show_data(show_id)
+        out = [{'season': int(row['season']), 'episode': int(row['episode'])} for row in data if row['acquired']]
         return out
