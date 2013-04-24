@@ -29,3 +29,7 @@ Usage
  2. Set your user name and password for both myepisods.com and trakt.tv
  3. Set your API key from [tackt.tv](https://trakt.tv/api-docs/authentication)
  4. Run `python ./run.py`
+
+_Note: If your season-episode string does not match 1x18 (e.g. if you have it set as s01e18 in 
+'Season & Episode numbering Format' in your MyEpisodes control panel) you may need to edit 
+`myepisodes.py` on line 80 (`episode_data = episode.string.split('x')`)._
