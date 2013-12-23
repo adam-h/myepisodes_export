@@ -1,3 +1,5 @@
+_Note: I am not supporting this as it was just a run-once script I put up if it is useful to others. Will accept pull requests though if it will help others_
+
 Intro
 =====
 Export myepisodes.com data into trakt.tv
