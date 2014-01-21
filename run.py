@@ -20,6 +20,18 @@ if(login == False):
 
 me.get_show_list()
 
+def trakt_req(cmd, data, retries = 3):
+    req = urllib2.Request('https://api.trakt.tv/' + cmd + '/' + TRAKT_KEY, json.dumps(data), {'content-type': 'application/json'})
+    try:
+        f = urllib2.urlopen(req)
+    except:
+        retries -= 1
+        if retries >= 0:
+            return trakt_request(url, data, retries)
+        raise
+    else:
+        return json.loads(f.read())
+
 watchlist = []
 
 for show in me.show_list:
@@ -40,10 +52,7 @@ for show in me.show_list:
         "title": tvdb_data['seriesname'],
         "episodes": collection_episodes
     }
-
-    req = urllib2.Request('https://api.trakt.tv/show/episode/library/' + TRAKT_KEY, json.dumps(trakt_data), {'content-type': 'application/json'})
-    f = urllib2.urlopen(req)
-    status = json.loads(f.read())
+    status = trakt_req('show/episode/library', trakt_data)
 
     if(status['status'] == 'success'):
         print "OK - Updated catalogue of %s - %s" % (tvdb_data['seriesname'], status['message'])
@@ -60,10 +69,7 @@ for show in me.show_list:
         "title": tvdb_data['seriesname'],
         "episodes": seen_episodes
     }
-
-    req = urllib2.Request('http://api.trakt.tv/show/episode/seen/' + TRAKT_KEY, json.dumps(trakt_data), {'content-type': 'application/json'})
-    f = urllib2.urlopen(req)
-    status = json.loads(f.read())
+    status = trakt_req('show/episode/seen', trakt_data)
 
     if(status['status'] == 'success'):
         print "OK - Updated seen status of %s - %s" % (tvdb_data['seriesname'], status['message'])
@@ -75,10 +81,7 @@ trakt_data = {
     "password": trakt_pass_sha1,
     "shows": watchlist
 }
-
-req = urllib2.Request('https://api.trakt.tv/show/watchlist/' + TRAKT_KEY, json.dumps(trakt_data), {'content-type': 'application/json'})
-f = urllib2.urlopen(req)
-status = json.loads(f.read())
+status = trakt_req('show/watchlist', trakt_data)
 
 if(status['status'] == 'success'):
     print "OK - Updated Watchlist"
