@@ -1,6 +1,6 @@
 from myepisodes import MyEpisodes
 from hashlib import sha1
-import tvdb_api, urllib2, json
+import tvdb_api, urllib2, json, sys
 
 TRAKT_KEY = '##TRAKT_API_KEY##'
 TRAKT_USER = '##TRAKT_USER##'
@@ -13,7 +13,11 @@ tvdb = tvdb_api.Tvdb()
 trakt_pass_sha1 = sha1(TRAKT_PASS).hexdigest()
 
 me = MyEpisodes(MYEP_USER, MYEP_PASS)
-me.login()
+login = me.login()
+if(login == False):
+    print "FAIL - Could not login to MyEpisodes"
+    sys.exit(1)
+
 me.get_show_list()
 
 watchlist = []

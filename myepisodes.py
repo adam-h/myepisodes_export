@@ -6,7 +6,7 @@ import cookielib
 import re
 import urllib, urllib2, urlparse
 
-MYEPISODE_URL = "http://myepisodes.com"
+MYEPISODE_URL = "http://www.myepisodes.com"
 
 
 class MyEpisodes(object):
