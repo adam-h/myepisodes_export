@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# From: https://github.com/maximeh/script.myepisodes/
+# Author: maximeh
 
 from BeautifulSoup import BeautifulSoup
 import cookielib
