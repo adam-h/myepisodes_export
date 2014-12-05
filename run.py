@@ -1,6 +1,6 @@
 from myepisodes import MyEpisodes
 from hashlib import sha1
-import tvdb_api, urllib2, json, sys
+import tvdb_api, urllib2, json, sys, time
 
 TRAKT_KEY = '##TRAKT_API_KEY##'
 TRAKT_USER = '##TRAKT_USER##'
@@ -20,14 +20,17 @@ if(login == False):
 
 me.get_show_list()
 
-def trakt_req(cmd, data, retries = 3):
+def trakt_req(cmd, data, retries = 5):
     req = urllib2.Request('https://api.trakt.tv/' + cmd + '/' + TRAKT_KEY, json.dumps(data), {'content-type': 'application/json'})
     try:
         f = urllib2.urlopen(req)
     except:
         retries -= 1
         if retries >= 0:
-            return trakt_request(url, data, retries)
+            print "Lost connection to trakt.tv. Reconnecting in 60 seconds."
+            time.sleep(60)
+            print "Reconnecting..."
+            return trakt_req(cmd, data, retries)
         raise
     else:
         return json.loads(f.read())
