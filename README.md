@@ -28,13 +28,20 @@ Requires
 Usage
 =====
  1. Check you have the requirements
- 2. Set your user name and password for both myepisods.com and trakt.tv
- 3. Set your API key from [tackt.tv](https://trakt.tv/api-docs/authentication)
- 4. Run `python ./run.py`
+ 2. Go to http://trakt.tv/oauth/applications(http://trakt.tv/oauth/applications) and create a new application using urn:ietf:wg:oauth:2.0:oob as the redirect uri.
+ 3. Set the client id and client secret for the new application in myepisodes_export.ini
+ 4. Set your user name and password for myepisodes.com in myepisodes_export.ini
+ 5. Run `python ./run.py`
 
 _Note: If your season-episode string does not match 1x18 (e.g. if you have it set as s01e18 in
 'Season & Episode numbering Format' in your MyEpisodes control panel) you may need to edit
 `myepisodes.py` on line 80 (`episode_data = episode.string.split('x')`)._
+
+Todo
+====
+
+The authentication method should be improved as each user shouldn't need to have to create their own application with trakt.tv.
+The reason why it works like it does it to avoid having a public client secret.
 
 Thanks
 ======

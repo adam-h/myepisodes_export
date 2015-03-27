@@ -1,92 +1,88 @@
 from myepisodes import MyEpisodes
+from trakt import Trakt
 from hashlib import sha1
-import tvdb_api, urllib2, json, sys, time
+import tvdb_api, urllib2, json, sys, time, ConfigParser
 
-TRAKT_KEY = '##TRAKT_API_KEY##'
-TRAKT_USER = '##TRAKT_USER##'
-TRAKT_PASS = '##TRAKT_PASS##'
-MYEP_USER = '##MYEP_USER##'
-MYEP_PASS = '##MYEP_PASS##'
+config = ConfigParser.ConfigParser()
+config.read('myepisodes_export.ini')
 
 tvdb = tvdb_api.Tvdb()
 
-trakt_pass_sha1 = sha1(TRAKT_PASS).hexdigest()
-
-me = MyEpisodes(MYEP_USER, MYEP_PASS)
-login = me.login()
+my_episodes = MyEpisodes(
+        config.get('MyEpisodes', 'Username'),
+        config.get('MyEpisodes', 'Password'))
+login = my_episodes.login()
 if(login == False):
-    print "FAIL - Could not login to MyEpisodes"
+    print "ERROR - Could not login to MyEpisodes"
     sys.exit(1)
 
-me.get_show_list()
+my_episodes.get_show_list()
 
-def trakt_req(cmd, data, retries = 5):
-    req = urllib2.Request('https://api.trakt.tv/' + cmd + '/' + TRAKT_KEY, json.dumps(data), {'content-type': 'application/json'})
-    try:
-        f = urllib2.urlopen(req)
-    except:
-        retries -= 1
-        if retries >= 0:
-            print "Lost connection to trakt.tv. Reconnecting in 60 seconds."
-            time.sleep(60)
-            print "Reconnecting..."
-            return trakt_req(cmd, data, retries)
-        raise
-    else:
-        return json.loads(f.read())
 
-watchlist = []
+trakt = Trakt(
+        config.get('Trakt', 'ClientId'),
+        config.get('Trakt', 'ClientSecret'))
 
-for show in me.show_list:
+print "Requesting Trakt.tv authorization..."
+print "To authorize access to you trakt.tv account access the following URL in a web browser and copy the authorization code:"
+print trakt.get_authorize_url()
+code = raw_input('Paste the authorization code here: ')
+trakt.authorize(code)
+
+for show in my_episodes.show_list:
+    print "\nProcessing: {}".format(show['name'])
     try:
         tvdb_data = tvdb[show['name']]
+
     except:
-        print "FAIL - Could not get TVDB ID for %s" % (show['name'])
+        print "ERROR - Could not get TVDB ID for {}".format(show['name'])
+        print "Skipping show: {}".format(show['name'])
         continue
 
-    watchlist.append({'tvdb_id': tvdb_data['id'], "title": tvdb_data['seriesname']})
+    print '  Importing collection...'
+    collection_data = my_episodes.get_collection_episodes(show["id"])
+    collection_changes = trakt.add_to_collection(
+            tvdb_data['seriesname'],
+            tvdb_data['id'],
+            collection_data)
 
-    collection_episodes = me.get_collection_episodes(show["id"])
+    added = collection_changes['added']['episodes']
+    updated = collection_changes['updated']['episodes']
+    existing = collection_changes['existing']['episodes']
+    if added > 0:
+        print "    Added: {} episodes".format(added)
+    if updated > 0:
+        print "    Updated: {} episodes".format(updated)
+    if existing > 0:
+        print "    Existing: {} episodes".format(existing)
+    if added == 0 and updated == 0 and existing == 0:
+        print '    Show not found.'
+    
+    print '  Importing watched episodes...'
+    watched_data = my_episodes.get_seen_episodes(show["id"])
+    watched_changes = trakt.add_to_watched_history(
+            tvdb_data['seriesname'],
+            tvdb_data['id'],
+            watched_data)
 
-    trakt_data = {
-        "username": TRAKT_USER,
-        "password": trakt_pass_sha1,
-        "tvdb_id": tvdb_data['id'],
-        "title": tvdb_data['seriesname'],
-        "episodes": collection_episodes
-    }
-    status = trakt_req('show/episode/library', trakt_data)
-
-    if(status['status'] == 'success'):
-        print "OK - Updated catalogue of %s - %s" % (tvdb_data['seriesname'], status['message'])
+    added = watched_changes['added']['episodes']
+    if added > 0:
+        print "    Added: {} episodes".format(added) 
     else:
-        print "FAIL - Could not update catalogue of %s - %s" % (tvdb_data['seriesname'], status['message'])
+        print '    Show not found.'
+    
+    print '  Adding show to watch list...'
+    watchlist_changes = trakt.add_to_watchlist(
+            tvdb_data['seriesname'],
+            tvdb_data['id'])
 
-
-    seen_episodes = me.get_seen_episodes(show["id"])
-
-    trakt_data = {
-        "username": TRAKT_USER,
-        "password": trakt_pass_sha1,
-        "tvdb_id": tvdb_data['id'],
-        "title": tvdb_data['seriesname'],
-        "episodes": seen_episodes
-    }
-    status = trakt_req('show/episode/seen', trakt_data)
-
-    if(status['status'] == 'success'):
-        print "OK - Updated seen status of %s - %s" % (tvdb_data['seriesname'], status['message'])
-    else:
-        print "FAIL - Could not update seen status of %s - %s" % (tvdb_data['seriesname'], status['message'])
-
-trakt_data = {
-    "username": TRAKT_USER,
-    "password": trakt_pass_sha1,
-    "shows": watchlist
-}
-status = trakt_req('show/watchlist', trakt_data)
-
-if(status['status'] == 'success'):
-    print "OK - Updated Watchlist"
-else:
-    print "FAIL - Could not update Watchlist"
+    added = watchlist_changes['added']['shows']
+    existing = watchlist_changes['existing']['shows']
+    not_found = watchlist_changes['not_found']['shows']
+    if added > 0:
+        print '    Added to watch list.'
+    if existing > 0:
+        print '    Show already on watch list.'
+    if len(not_found) > 0:
+       print '     Show not found.' 
+#
