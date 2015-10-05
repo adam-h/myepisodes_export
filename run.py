@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from myepisodes import MyEpisodes
 from trakt import Trakt
 from hashlib import sha1
@@ -35,6 +36,8 @@ for show in my_episodes.show_list:
         tvdb_data = tvdb[show['name']]
 
     except:
+        f = open('fails.txt', 'a')
+        f.write("%s\n" % show['name'])
         print "ERROR - Could not get TVDB ID for {}".format(show['name'])
         print "Skipping show: {}".format(show['name'])
         continue
