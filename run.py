@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 from myepisodes import MyEpisodes
 from trakt import Trakt
 from hashlib import sha1
-import tvdb_api, urllib2, json, sys, time, ConfigParser
+import tvdb_api, urllib2, json, sys, time, ConfigParser, unicodedata
 
 config = ConfigParser.ConfigParser()
 config.read('myepisodes_export.ini')
@@ -31,6 +30,7 @@ code = raw_input('Paste the authorization code here: ')
 trakt.authorize(code)
 
 for show in my_episodes.show_list:
+    show['name'] = unicodedata.normalize('NFKD', show['name']).encode('ascii','ignore')
     print "\nProcessing: {}".format(show['name'])
     try:
         tvdb_data = tvdb[show['name']]
