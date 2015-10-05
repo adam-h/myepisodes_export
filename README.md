@@ -32,6 +32,7 @@ Usage
  3. Set the client id and client secret for the new application in myepisodes_export.ini
  4. Set your user name and password for myepisodes.com in myepisodes_export.ini
  5. Run `python ./run.py`
+ 6. Check the fails.txt afterwards to see, if some show could not be imported
 
 _Note: If your season-episode string does not match 1x18 (e.g. if you have it set as s01e18 in
 'Season & Episode numbering Format' in your MyEpisodes control panel) you may need to edit
